@@ -5,12 +5,9 @@ __pycache__/
 .venv312/
 .vscode/
 archive/
-backend/.env
-frontend/.env
 backend/data/uploads/
 backend/data/artifacts/
 backend/data/runtime/
-backend/data/aurak_catalog/*.pdf
 !backend/data/aurak_catalog/.gitkeep
 frontend/node_modules/
 frontend/dist/
