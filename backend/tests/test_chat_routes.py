@@ -50,6 +50,27 @@ def test_conversation_crud(client):
     assert not any(row['id'] == conversation_id for row in rows_after)
 
 
+def test_source_list_includes_extraction_status(client, storage):
+    from app.services.retrieval_service import retrieval_service
+
+    storage.upsert_source('src_not_ready', 'Pending Upload', 'upload', None)
+    storage.upsert_source('src_ready', 'Ready Upload', 'upload', None)
+    retrieval_service.index_source_text('src_ready', 'This source has extracted chunks.')
+
+    response = client.get('/api/conversations')
+    assert response.status_code == 200
+    payload = response.json()
+
+    sources = {item['id']: item for item in payload['sources']}
+    assert sources['src_not_ready']['is_extracted'] is False
+    assert sources['src_not_ready']['chunks_indexed'] == 0
+    assert sources['src_not_ready']['extract_status'] == 'not_ready'
+
+    assert sources['src_ready']['is_extracted'] is True
+    assert sources['src_ready']['chunks_indexed'] >= 1
+    assert sources['src_ready']['extract_status'] == 'ready'
+
+
 def test_upload_and_retrieval_success(client, uploaded_source):
     response = client.post(
         '/api/chat',

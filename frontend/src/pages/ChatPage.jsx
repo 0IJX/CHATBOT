@@ -16,7 +16,11 @@ export default function ChatPage() {
   const [deleteConversationId, setDeleteConversationId] = useState('');
   const [deletingConversation, setDeletingConversation] = useState(false);
 
-  const sourceOptions = useMemo(() => [{ id: '', name: 'Auto (catalog default)' }, ...sources], [sources]);
+  const readySources = useMemo(
+    () => sources.filter((source) => source.is_extracted),
+    [sources]
+  );
+  const sourceOptions = useMemo(() => [{ id: '', name: 'Auto (catalog default)' }, ...readySources], [readySources]);
   const sourceMap = useMemo(
     () =>
       Object.fromEntries(
@@ -27,18 +31,34 @@ export default function ChatPage() {
       ),
     [sources]
   );
+  const sourceById = useMemo(
+    () => Object.fromEntries(sources.map((source) => [source.id, source])),
+    [sources]
+  );
   const activeSourceLabel = useMemo(() => {
     if (!activeSourceId) return 'Auto (catalog default)';
     return sourceMap[activeSourceId] || activeSourceId;
   }, [activeSourceId, sourceMap]);
+  const activeSourceReady = useMemo(() => {
+    if (!activeSourceId) return true;
+    return Boolean(sourceById[activeSourceId]?.is_extracted);
+  }, [activeSourceId, sourceById]);
+  const hiddenNotReadyCount = useMemo(
+    () => sources.filter((source) => !source.is_extracted).length,
+    [sources]
+  );
 
   async function refreshList(currentConversationId = conversationId) {
     const data = await api.listConversations(currentConversationId || undefined);
-    setConversations(data.conversations || []);
-    setSources(data.sources || []);
+    const nextConversations = data.conversations || [];
+    const nextSources = data.sources || [];
+    setConversations(nextConversations);
+    setSources(nextSources);
     if (currentConversationId) {
       setMessages(data.messages || []);
-      setActiveSourceId(data.active_source_id || '');
+      const nextActive = data.active_source_id || '';
+      const activeReady = !nextActive || nextSources.some((item) => item.id === nextActive && item.is_extracted);
+      setActiveSourceId(activeReady ? nextActive : '');
     }
   }
 
@@ -133,6 +153,14 @@ export default function ChatPage() {
     }
   }
 
+  function handleComposerKeyDown(event) {
+    if (event.key !== 'Enter') return;
+    if (event.shiftKey) return;
+    if (event.nativeEvent?.isComposing) return;
+    event.preventDefault();
+    void sendMessage();
+  }
+
   useEffect(() => {
     void refreshList();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -144,26 +172,32 @@ export default function ChatPage() {
         <div className="workspace-top row between wrap gap">
           <div>
             <h2>Chat</h2>
-            <p className="status">
-              Current source: <strong>{activeSourceLabel}</strong>
-            </p>
           </div>
           <div className="row gap wrap workspace-actions">
+            <span className="source-label source-status">
+              <span className={`source-dot ${activeSourceReady ? 'ready' : 'not-ready'}`} />
+              {activeSourceLabel}
+            </span>
             <select id="source-select" value={activeSourceId} onChange={(event) => setActiveSourceId(event.target.value)}>
               {sourceOptions.map((source) => (
                 <option key={source.id || 'auto'} value={source.id}>
-                  {source.name}
+                  {source.id ? `🟢 ${source.name}` : source.name}
                 </option>
               ))}
             </select>
             <button onClick={createNewConversation}>New chat</button>
           </div>
         </div>
+        {hiddenNotReadyCount > 0 ? (
+          <p className="status workspace-status">
+            🔴 {hiddenNotReadyCount} source(s) are not extracted yet, so they are hidden from source selection.
+          </p>
+        ) : null}
 
         <div className="session-strip">
           <div className="row between wrap gap">
             <strong>Chats</strong>
-            <span className="status">{conversations.length ? `${conversations.length} saved` : 'No saved chats yet'}</span>
+            <span className="status">{conversations.length}</span>
           </div>
           {conversations.length ? (
             <ul className="session-inline-list">
@@ -196,10 +230,11 @@ export default function ChatPage() {
 
         <div className="composer">
           <textarea
-            rows={4}
-            placeholder="Ask about catalog details or your uploaded file..."
+            rows={3}
+            placeholder="Type your message..."
             value={input}
             onChange={(event) => setInput(event.target.value)}
+            onKeyDown={handleComposerKeyDown}
           />
           <div className="row between wrap gap">
             <p className="status">{sending ? 'Assistant is replying...' : 'Ready'}</p>

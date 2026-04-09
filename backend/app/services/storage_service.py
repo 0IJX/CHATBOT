@@ -135,9 +135,29 @@ class StorageService:
     def list_sources(self) -> list[dict]:
         with db_cursor() as cur:
             cur.execute(
-                "SELECT id, name, kind FROM sources ORDER BY kind DESC, updated_at DESC"
+                """
+                SELECT
+                  s.id,
+                  s.name,
+                  s.kind,
+                  COALESCE(c.chunk_count, 0) AS chunks_indexed,
+                  CASE WHEN COALESCE(c.chunk_count, 0) > 0 THEN 1 ELSE 0 END AS is_extracted,
+                  CASE WHEN COALESCE(c.chunk_count, 0) > 0 THEN 'ready' ELSE 'not_ready' END AS extract_status
+                FROM sources s
+                LEFT JOIN (
+                  SELECT source_id, COUNT(*) AS chunk_count
+                  FROM chunks
+                  GROUP BY source_id
+                ) c ON c.source_id = s.id
+                ORDER BY s.kind DESC, s.updated_at DESC
+                """
             )
-            return [dict(row) for row in cur.fetchall()]
+            rows = [dict(row) for row in cur.fetchall()]
+        for row in rows:
+            row["chunks_indexed"] = int(row.get("chunks_indexed") or 0)
+            row["is_extracted"] = bool(row.get("is_extracted"))
+            row["extract_status"] = "ready" if row["is_extracted"] else "not_ready"
+        return rows
 
     def list_upload_sources(self) -> list[dict]:
         with db_cursor() as cur:

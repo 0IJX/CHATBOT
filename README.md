@@ -1,4 +1,4 @@
-# UNI Chatbot
+# AURAK Assistant
 
 This is a local AI chatbot for study use.
 It can answer from your files and from your local catalog data.

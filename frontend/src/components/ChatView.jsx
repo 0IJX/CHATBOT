@@ -10,7 +10,6 @@ export default function ChatView({ messages, sourceMap }) {
     return (
       <section className="chat-empty">
         <h3>Start a chat</h3>
-        <p className="status">Ask about AURAK catalog topics or your uploaded files.</p>
       </section>
     );
   }

@@ -9,7 +9,7 @@ export default function SettingsPage() {
   const inputRef = useRef(null);
   const [sources, setSources] = useState([]);
   const [conversations, setConversations] = useState([]);
-  const [status, setStatus] = useState('Upload a file or paste a link to add a source.');
+  const [status, setStatus] = useState('');
   const [lastUploads, setLastUploads] = useState([]);
   const [busy, setBusy] = useState(false);
   const [dragActive, setDragActive] = useState(false);
@@ -22,12 +22,21 @@ export default function SettingsPage() {
     () => sources.filter((item) => item.kind === 'upload'),
     [sources]
   );
+  const extractedUploadSources = useMemo(
+    () => uploadSources.filter((item) => item.is_extracted),
+    [uploadSources]
+  );
+  const pendingUploadSources = useMemo(
+    () => uploadSources.filter((item) => !item.is_extracted),
+    [uploadSources]
+  );
 
   async function loadState() {
     const data = await api.listConversations();
-    setSources(data.sources || []);
+    const nextSources = data.sources || [];
+    setSources(nextSources);
     setConversations(data.conversations || []);
-    if (selectedSourceId && !(data.sources || []).some((item) => item.id === selectedSourceId)) {
+    if (selectedSourceId && !nextSources.some((item) => item.id === selectedSourceId && item.is_extracted)) {
       setSelectedSourceId('');
     }
   }
@@ -132,7 +141,6 @@ export default function SettingsPage() {
     <div className="panel-stack">
       <section className="workspace simple-page">
         <h2>Data and sources</h2>
-        <p className="status">Manage your files, chat history, and local app data.</p>
 
         <div
           className={`upload-dropzone ${dragActive ? 'drag-active' : ''}`}
@@ -151,9 +159,8 @@ export default function SettingsPage() {
           }}
           onDrop={onDrop}
         >
-          <h3>Upload files</h3>
-          <p className="status">Drag and drop files here or click browse.</p>
-          <p className="status">Supported: txt, md, json, pdf, docx, csv, xlsx.</p>
+          <h3>{dragActive ? 'Drop files here' : 'Upload files'}</h3>
+          <p className="status">{dragActive ? 'Release to upload.' : 'Drag files here or use browse.'}</p>
           <div className="row gap wrap">
             <button onClick={() => inputRef.current?.click()} disabled={busy}>
               {busy ? 'Working...' : 'Browse Files'}
@@ -166,12 +173,12 @@ export default function SettingsPage() {
               onChange={(event) => onFilesSelected(event.target.files)}
             />
           </div>
+          <p className="drop-hint">Supported: txt, md, json, pdf, docx, csv, xlsx</p>
         </div>
 
         <div className="section-divider" />
 
         <h3>Ingest from link</h3>
-        <p className="status">Paste a URL or Google Sheets link.</p>
         <div className="row gap wrap">
           <input
             placeholder="https://example.com/course-outline"
@@ -187,20 +194,25 @@ export default function SettingsPage() {
 
         <h3>Uploaded sources</h3>
         {!uploadSources.length ? (
-          <p className="status">No uploaded sources yet.</p>
+          <p className="status">No files.</p>
         ) : (
           <>
             <label className="panel-stack">
               <span>Select source</span>
               <select value={selectedSourceId} onChange={(event) => setSelectedSourceId(event.target.value)}>
-                <option value="">Choose uploaded source</option>
-                {uploadSources.map((item) => (
+                <option value="">Choose extracted source</option>
+                {extractedUploadSources.map((item) => (
                   <option key={item.id} value={item.id}>
-                    {item.name}
+                    🟢 {item.name}
                   </option>
                 ))}
               </select>
             </label>
+            {pendingUploadSources.length ? (
+              <p className="status">
+                🔴 {pendingUploadSources.length} source(s) are not extracted yet and are hidden from this selector.
+              </p>
+            ) : null}
             <div className="row gap wrap">
               <button
                 onClick={() =>
@@ -234,9 +246,6 @@ export default function SettingsPage() {
         <div className="section-divider" />
 
         <h3>History & reset</h3>
-        <p className="status">
-          Conversations: <strong>{conversations.length}</strong> | Uploaded sources: <strong>{uploadSources.length}</strong>
-        </p>
         <div className="row gap wrap">
           <button
             onClick={() =>
@@ -275,7 +284,7 @@ export default function SettingsPage() {
             Reset local app state
           </button>
         </div>
-        <p className="status workspace-status">{status}</p>
+        {status ? <p className="status workspace-status">{status}</p> : null}
         {lastUploads.length ? (
           <ul className="upload-result-list">
             {lastUploads.map((item) => (

@@ -4,19 +4,36 @@ export default function HelpPage() {
   return (
     <div className="panel-stack">
       <section className="workspace simple-page">
-        <h2>How to use</h2>
+        <h2>Quick guide</h2>
         <ul className="plain-list">
-          <li>Open Home and ask your question.</li>
-          <li>The catalog is available by default.</li>
-          <li>You can upload syllabus or exam files from Settings.</li>
-          <li>If you pick a source, answers will focus on that file.</li>
-          <li>Use History to view or delete old chats.</li>
+          <li>Go to Home, type your message, and press Enter to send.</li>
+          <li>Use Shift + Enter if you want a new line.</li>
+          <li>Catalog is used by default.</li>
+          <li>In Home, you can pick a source from the source dropdown.</li>
+          <li>If a source is selected, answers focus on that source.</li>
         </ul>
-        <h3>How answers work</h3>
-        <p className="status">
-          The assistant uses the catalog and your files based on your question.
-          If data is missing, it tells you clearly instead of guessing.
-        </p>
+
+        <h3>Settings page</h3>
+        <ul className="plain-list">
+          <li>Upload files with drag and drop or browse.</li>
+          <li>Supported: txt, md, json, pdf, docx, csv, xlsx.</li>
+          <li>Paste links in Ingest from link. Google Sheets links are supported.</li>
+          <li>Delete one uploaded source or clear all uploaded files.</li>
+          <li>Clear conversation history or clear all data.</li>
+        </ul>
+
+        <h3>History page</h3>
+        <ul className="plain-list">
+          <li>See all saved chats.</li>
+          <li>Delete one chat or clear all chats.</li>
+        </ul>
+
+        <h3>Answer behavior</h3>
+        <ul className="plain-list">
+          <li>The assistant tries to use the best source for your question.</li>
+          <li>If evidence is missing, it says that clearly.</li>
+          <li>It should not guess exact dates, times, or locations.</li>
+        </ul>
       </section>
     </div>
   );

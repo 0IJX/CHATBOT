@@ -98,6 +98,9 @@ class SourceOut(BaseModel):
     id: str
     name: str
     kind: str
+    chunks_indexed: int = 0
+    is_extracted: bool = False
+    extract_status: Literal["ready", "not_ready"] = "not_ready"
 
 
 class ConversationOut(BaseModel):

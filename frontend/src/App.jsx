@@ -14,7 +14,6 @@ function ShellLayout({ children, title }) {
       <main className="content-area">
         <header className="content-topbar">
           <h1>{title}</h1>
-          <p className="status topbar-subtitle">AURAK assistant with catalog knowledge and optional personal uploads.</p>
         </header>
         {children}
       </main>

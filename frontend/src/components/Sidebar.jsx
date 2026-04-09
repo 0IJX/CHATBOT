@@ -6,10 +6,10 @@ export default function Sidebar() {
     <aside className="sidebar">
       <section className="profile-card">
         <div className="avatar-photo logo-avatar">
-          <img src="/favicon.png" alt="AURAK Assistant logo" />
+          <img src="/favicon.png" alt="Local Academic AI Assistant logo" />
         </div>
         <div className="profile-meta">
-          <p className="profile-label">AURAK Assistant</p>
+          <p className="profile-label">Local Academic AI Assistant</p>
           <p className="profile-name">Academic Support</p>
         </div>
       </section>

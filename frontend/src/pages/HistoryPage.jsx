@@ -59,7 +59,6 @@ export default function HistoryPage() {
         <div className="workspace-top row between wrap gap">
           <div>
             <h2>Conversation History</h2>
-            <p className="status">{conversations.length ? `${conversations.length} conversation(s) saved` : 'No conversation history yet.'}</p>
           </div>
           <div className="row gap">
             <button onClick={load}>Refresh</button>
@@ -69,7 +68,7 @@ export default function HistoryPage() {
           </div>
         </div>
         {!conversations.length ? (
-          <p className="status workspace-status">No conversation history yet.</p>
+          <p className="status workspace-status">No chats.</p>
         ) : (
           <ul className="plain-list">
             {conversations.map((row) => (
